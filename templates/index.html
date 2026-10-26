@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tweet Review Analyzer</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head><body>
+<header><h1>Tweet Review Analyzer</h1><p>NLP mini project &middot; keywords, topics, similar reviews and review-class prediction</p></header>
+<main>
+<section>
+  <div class="card"><h2>Dataset profile</h2>
+    <div class="stats">
+      <div class="stat"><b>{{p.reviews}}</b><span>tweet reviews</span></div>
+      <div class="stat"><b>{{p.vocab}}</b><span>vocabulary</span></div>
+      <div class="stat"><b>{{p.avg_words}}</b><span>avg words</span></div>
+      <div class="stat"><b>{{p.classes|length}}</b><span>review classes</span></div>
+    </div></div>
+  <div class="card"><h2>Review class distribution</h2>
+    {% for k,v in p.classes.items() %}<div class="bar"><div class="n">{{k}}</div><div class="t"><div class="f" style="width:{{v/p.max_class*100}}%"></div></div><div class="v">{{v}}</div></div>{% endfor %}</div>
+  <div class="card"><h2>Top TF-IDF keywords</h2>
+    {% for k,v in p.keywords %}<div class="bar green"><div class="n">{{k}}</div><div class="t"><div class="f" style="width:{{v}}%"></div></div><div class="v">{{v}}</div></div>{% endfor %}</div>
+  <div class="card"><h2>Discovered topics (NMF)</h2>
+    <table><tr><th>Topic</th><th>Reviews</th><th>Top terms</th></tr>
+    {% for k,n,t in p.topics %}<tr><td>T{{k}}</td><td>{{n}}</td><td>{{t}}</td></tr>{% endfor %}</table></div>
+  <div class="card"><h2>Model performance (held-out {{p.test_size}} tweets)</h2>
+    <table><tr><th>Model</th><th>Acc</th><th>Prec</th><th>Recall</th><th>F1</th></tr>
+    {% for m in p.metrics %}<tr><td>{{m.model}}</td><td>{{m.accuracy}}</td><td>{{m.precision}}</td><td>{{m.recall}}</td><td>{{m.f1}}</td></tr>{% endfor %}</table>
+    <p class="hint">Trained on {{p.source}} ({{p.reviews}} tweets) &middot; models loaded from <code>models/*.pkl</code> &middot; bigram perplexity {{p.perplexity[2]}}.</p></div>
+</section>
+<section>
+  <div class="card"><h2>Analyze a tweet review</h2>
+    <form method="get"><textarea name="tweet" placeholder="Type or paste a tweet review...">{{tweet}}</textarea>
+      <div class="row"><button type="submit">Analyze</button>
+        <label class="sel">Classifier
+          <select name="model">{% for m in models %}<option {{'selected' if m==model_name}}>{{m}}</option>{% endfor %}</select></label></div></form></div>
+  {% if r %}
+  <div class="card"><h2>Cleaned text and tokens</h2>
+    <p class="lead">{{r.clean}}</p>
+    {% for t in r.tokens %}<span class="chip">{{t}}</span>{% endfor %}
+    {% if r.hashtags or r.mentions %}<p class="hint">Hashtags: {{r.hashtags|join(', ') or 'none'}} &middot; Mentions: {{r.mentions|join(', ') or 'none'}}</p>{% endif %}</div>
+  <div class="card"><h2>Predicted review class</h2>
+    {% for c,v in r.probs %}<div class="bar {{'amber' if loop.first else ''}}"><div class="n">{{c}}</div><div class="t"><div class="f" style="width:{{v}}%"></div></div><div class="v">{{v}}%</div></div>{% endfor %}
+    <p class="hint">{{r.model}} trained on the {{p.reviews}}-tweet file, so use it only to see how the application works.</p></div>
+  <div class="card"><h2>Topic and key terms</h2>
+    <p class="lead">Closest topic: <b>T{{r.topic}}</b> ({{r.topic_terms}})</p>
+    {% for k,v in r.keyterms %}<span class="chip">{{k}} &middot; {{v}}</span>{% endfor %}
+    {% if r.next_words %}<p class="hint">Bigram model next-word suggestions: {% for w,pr in r.next_words %}<b>{{w}}</b> ({{pr}}){{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}</div>
+  <div class="card"><h2>Most similar reviews</h2>
+    {% for s,l,t in r.similar %}<div class="sim"><span class="tag {{l}}">{{l}}</span> &nbsp;<b>{{s}}</b> &nbsp;{{t}}</div>{% else %}<p class="hint">No similar reviews found.</p>{% endfor %}</div>
+  {% else %}
+  <div class="card"><p class="hint">Enter a tweet review above and press Analyze to see the cleaned text, tokens, predicted class, closest topic, key terms and similar reviews.</p></div>
+  {% endif %}
+</section>
+</main>
+<footer>Tweet Review Analyzer &middot; Pimpri Chinchwad College of Engineering, Pune</footer>
+</body></html>
